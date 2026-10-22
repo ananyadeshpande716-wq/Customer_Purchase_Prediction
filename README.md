@@ -30,32 +30,37 @@ We plan to use the [UCI Online Retail dataset](https://archive.ics.uci.edu/datas
 
 ```text
 customer-purchase-prediction/
+│
 ├── README.md
 ├── requirements.txt
 ├── .gitignore
 ├── .env.example
+│
 ├── data/
 │   ├── README.md
 │   ├── raw/
 │   └── processed/
+│
 ├── notebooks/
-│   ├── 01_data_understanding.ipynb
-│   ├── 02_preprocessing_features.ipynb
-│   └── 03_model_training_evaluation.ipynb
+│   └── customer_purchase_prediction.ipynb
+│
 ├── src/
-│   ├── preprocessing.py
-│   ├── feature_engineering.py
-│   ├── train_model.py
-│   ├── predict.py
-│   └── mongodb.py
-├── app/
-│   └── streamlit_app.py
+│   ├── __init__.py
+│   ├── mongodb.py
+│   ├── customer_service.py
+│   └── predictor.py
+│
 ├── models/
+│
 ├── reports/
 │   ├── results.md
 │   └── figures/
+│
+├── app/
+│   └── streamlit_app.py
+│
 └── tests/
-    └── test_preprocessing.py
+    └── test_customer_service.py
 ```
 
 Files will be added as we implement each phase; this structure is a plan, not a claim that every component is implemented yet.
