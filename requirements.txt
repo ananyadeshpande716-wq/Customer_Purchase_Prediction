@@ -1,0 +1,15 @@
+# Core data and ML packages
+pandas
+numpy
+matplotlib
+seaborn
+scikit-learn
+openpyxl
+
+# Database and demo app (used in later phases)
+pymongo
+python-dotenv
+streamlit
+
+# Testing
+pytest
