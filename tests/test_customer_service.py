@@ -9,6 +9,7 @@ from src.customer_service import (
     get_customer,
     initialize_customer_collection,
     list_customers,
+    search_customers,
     update_customer,
 )
 
@@ -52,6 +53,27 @@ def main():
         assert changed_customer["customer_name"] == "Updated Demo Customer"
         print("UPDATE passed")
 
+                # SEARCH, FILTER AND PAGINATION
+        results = search_customers(
+            search_text=test_id,
+            country="India",
+            page=1,
+            page_size=10,
+        )
+
+        assert results["total"] >= 1
+        assert results["page"] == 1
+        assert results["page_size"] == 10
+
+        assert any(
+            customer["customer_id"] == test_id
+            for customer in results["items"]
+        )
+
+        print("SEARCH passed")
+        print("FILTER passed")
+        print("PAGINATION passed")
+        
         # DELETE
         deleted = delete_customer(test_id)
         assert deleted is True

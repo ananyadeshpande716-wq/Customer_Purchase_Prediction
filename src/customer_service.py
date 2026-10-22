@@ -1,6 +1,6 @@
 
 """Customer CRUD operations for the purchase prediction application."""
-
+import re
 from datetime import datetime, timezone
 from typing import Any
 
@@ -121,6 +121,100 @@ def list_customers(limit: int = 50) -> list[dict]:
         .limit(limit)
     )
 
+def search_customers(
+    search_text: str = "",
+    country: str | None = None,
+    page: int = 1,
+    page_size: int = 20,
+) -> dict:
+    """
+    Search customers by ID or name, optionally filter by country,
+    and return one page of results with pagination metadata.
+    """
+
+    # Validate pagination inputs
+    if (
+        not isinstance(page, int)
+        or isinstance(page, bool)
+        or page < 1
+    ):
+        raise ValueError("Page must be a positive integer.")
+
+    if (
+        not isinstance(page_size, int)
+        or isinstance(page_size, bool)
+        or not 1 <= page_size <= 100
+    ):
+        raise ValueError("Page size must be between 1 and 100.")
+
+    # Validate search text
+    if not isinstance(search_text, str):
+        raise ValueError("Search text must be a string.")
+
+    search_text = search_text.strip()
+
+    if len(search_text) > 100:
+        raise ValueError("Search text cannot exceed 100 characters.")
+
+    # Build MongoDB query filters
+    filters = {}
+
+    if search_text:
+        pattern = re.escape(search_text)
+
+        filters["$or"] = [
+            {
+                "customer_id": {
+                    "$regex": pattern,
+                    "$options": "i",
+                }
+            },
+            {
+                "customer_name": {
+                    "$regex": pattern,
+                    "$options": "i",
+                }
+            },
+        ]
+
+    if country is not None:
+        if not isinstance(country, str):
+            raise ValueError("Country must be a string.")
+
+        country = country.strip()
+
+        if not country or len(country) > 100:
+            raise ValueError("Provide a valid country name.")
+
+        filters["country"] = {
+            "$regex": f"^{re.escape(country)}$",
+            "$options": "i",
+        }
+
+    collection = get_customers_collection()
+
+    # Count all records matching the filters
+    total = collection.count_documents(filters)
+
+    # Fetch only the requested page
+    skip_count = (page - 1) * page_size
+
+    records = list(
+        collection.find(filters, {"_id": 0})
+        .sort("updated_at", -1)
+        .skip(skip_count)
+        .limit(page_size)
+    )
+
+    total_pages = (total + page_size - 1) // page_size
+
+    return {
+        "items": records,
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "total_pages": total_pages,
+    }
 
 def update_customer(
     customer_id: str,
