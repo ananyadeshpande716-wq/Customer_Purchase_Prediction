@@ -1,6 +1,6 @@
 
 """Generate purchase predictions and store their history in MongoDB."""
-
+from src.feature_service import get_customer_features
 from datetime import datetime, timezone
 from typing import Mapping, Any
 
@@ -11,6 +11,7 @@ from src.predictor import predict_purchase
 def predict_and_save_purchase(
     customer_id: str,
     features: Mapping[str, Any],
+    feature_snapshot_date=None,
 ) -> dict:
     """
     Generate a purchase prediction and persist it in MongoDB.
@@ -46,6 +47,7 @@ def predict_and_save_purchase(
         "target_days": prediction["target_days"],
         "features": prediction["features"],
         "created_at": created_at,
+        "feature_snapshot_date": feature_snapshot_date,
     }
 
     # Store the result in MongoDB Atlas.
@@ -87,3 +89,31 @@ def get_prediction_history(
         .sort("created_at", -1)
         .limit(limit)
     )
+
+def predict_customer_by_id(customer_id: str) -> dict:
+    """
+    Retrieve a customer's latest available feature snapshot,
+    generate a purchase prediction, and save it to MongoDB.
+    """
+
+    customer_data = get_customer_features(customer_id)
+
+    if customer_data is None:
+        raise LookupError(
+            f"No purchase feature history found for customer "
+            f"'{customer_id}'."
+        )
+
+    result = predict_and_save_purchase(
+        customer_id=customer_data["customer_id"],
+        features=customer_data["features"],
+        feature_snapshot_date=customer_data["snapshot_date"],
+    )
+
+    result["feature_snapshot_date"] = (
+        customer_data["snapshot_date"].isoformat()
+        if customer_data["snapshot_date"] is not None
+        else None
+    )
+
+    return result
